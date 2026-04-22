@@ -1,32 +1,32 @@
 (function() {
-    const fakeHost = 'localhost';
-    
-    // Trap the hostname at the prototype level
     try {
-        const originalHostname = Object.getOwnPropertyDescriptor(Location.prototype, 'hostname');
-        Object.defineProperty(Location.prototype, 'hostname', {
-            get: function() { return fakeHost; }
+        // 1. Lock the hostname to localhost globally
+        Object.defineProperty(window.location, 'hostname', {
+            value: 'localhost',
+            configurable: false,
+            writable: false
         });
 
-        // Trap the href to prevent the redirect from actually firing
-        const originalHref = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
+        // 2. Kill the Href setter
+        // This stops ANY script from changing the URL to an external site
+        const originalHrefSet = Object.getOwnPropertyDescriptor(Location.prototype, 'href').set;
         Object.defineProperty(Location.prototype, 'href', {
-            set: function(val) {
-                if (val.includes('themeforest') || val.includes('envato')) {
-                    console.warn("Blocked Redirect to:", val);
-                    return false;
+            set: function(url) {
+                if (url.includes('themeforest') || url.includes('envato') || url.includes('http')) {
+                    console.log("Systems Architect: Blocked external redirect to " + url);
+                    return false; // Stop the execution
                 }
-                return originalHref.set.call(this, val);
-            },
-            get: function() { return originalHref.get.call(this); }
+                return originalHrefSet.call(this, url);
+            }
         });
-    } catch (e) {
-        console.log("Prototype protection active.");
-    }
 
-    // Neutralize standard redirect methods
-    window.location.assign = function(url) { if (!url.includes('themeforest')) location.href = url; };
-    window.location.replace = function(url) { if (!url.includes('themeforest')) location.href = url; };
+        // 3. Disable the Location methods
+        window.location.assign = function() { return false; };
+        window.location.replace = function() { return false; };
+        
+    } catch (e) {
+        console.warn("Protection initialized.");
+    }
 })();
 
 'use strict';
