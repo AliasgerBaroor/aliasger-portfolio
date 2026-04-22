@@ -18,31 +18,6 @@
 
     <link rel="stylesheet" type="text/css" href="css/colorswitcher.css">
     <link id="dynamic-theme" rel="stylesheet" href="css/skins/multicolors.css">
-<script>
-    // Immediate Redirect Protection
-    (function () {
-        const blockRedirect = (url) => {
-            if (url && (url.includes('themeforest') || url.includes('envato'))) {
-                console.warn("Architecture Protection: Blocked Template Redirect.");
-                return true;
-            }
-            return false;
-        };
-
-        // Override Location Methods
-        const originalAssign = window.location.assign;
-        window.location.assign = function (url) { if (!blockRedirect(url)) originalAssign.apply(this, arguments); };
-
-        const originalReplace = window.location.replace;
-        window.location.replace = function (url) { if (!blockRedirect(url)) originalReplace.apply(this, arguments); };
-
-        // Block the page from actually unloading if a script tries to force it
-        window.addEventListener('unload', function (e) {
-            // This acts as a final emergency brake
-            debugger;
-        });
-    })();
-</script>
 </head>
 
 <body>
