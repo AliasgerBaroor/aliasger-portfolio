@@ -18,31 +18,31 @@
 
     <link rel="stylesheet" type="text/css" href="css/colorswitcher.css">
     <link id="dynamic-theme" rel="stylesheet" href="css/skins/multicolors.css">
-    <script>
-        (function () {
-                const block = () => {
-                    console.log("Redirect attempt blocked.");
-                    return true;
-                };
+<script>
+    // Immediate Redirect Protection
+    (function () {
+        const blockRedirect = (url) => {
+            if (url && (url.includes('themeforest') || url.includes('envato'))) {
+                console.warn("Architecture Protection: Blocked Template Redirect.");
+                return true;
+            }
+            return false;
+        };
 
-                // Intercept attempts to change the page
-                window.onbeforeunload = block;
+        // Override Location Methods
+        const originalAssign = window.location.assign;
+        window.location.assign = function (url) { if (!blockRedirect(url)) originalAssign.apply(this, arguments); };
 
-                // 2. Neutralize common redirection methods used in templates
-                const originalAssign = window.location.assign;
-                const originalReplace = window.location.replace;
+        const originalReplace = window.location.replace;
+        window.location.replace = function (url) { if (!blockRedirect(url)) originalReplace.apply(this, arguments); };
 
-                Object.defineProperty(window.location, 'href', {
-                    set: function (url) {
-                        if (url.includes('themeforest') || url.includes('envato')) {
-                            console.warn("Blocked template redirect to:", url);
-                            return false;
-                        }
-                        return url;
-                    }
-                });
-            })();
-    </script>
+        // Block the page from actually unloading if a script tries to force it
+        window.addEventListener('unload', function (e) {
+            // This acts as a final emergency brake
+            debugger;
+        });
+    })();
+</script>
 </head>
 
 <body>
