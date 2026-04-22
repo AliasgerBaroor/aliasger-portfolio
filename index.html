@@ -18,6 +18,105 @@
 
     <link rel="stylesheet" type="text/css" href="css/colorswitcher.css">
     <link id="dynamic-theme" rel="stylesheet" href="css/skins/multicolors.css">
+  <script>
+(function () {
+
+    const isBad = (url) => {
+        return typeof url === "string" &&
+            (url.includes("themeforest") || url.includes("envato"));
+    };
+
+    const block = (url) => {
+        if (isBad(url)) {
+            console.warn("🚫 Blocked redirect:", url);
+            return true;
+        }
+        return false;
+    };
+
+    // =========================
+    // 1. Block location changes
+    // =========================
+    const loc = window.location;
+
+    try {
+        const origAssign = loc.assign;
+        loc.assign = function (url) {
+            if (block(url)) return;
+            return origAssign.call(this, url);
+        };
+
+        const origReplace = loc.replace;
+        loc.replace = function (url) {
+            if (block(url)) return;
+            return origReplace.call(this, url);
+        };
+    } catch (e) {}
+
+    try {
+        const desc = Object.getOwnPropertyDescriptor(Location.prototype, "href");
+        Object.defineProperty(Location.prototype, "href", {
+            set(val) {
+                if (block(val)) return;
+                return desc.set.call(this, val);
+            }
+        });
+    } catch (e) {}
+
+    // =========================
+    // 2. Block window.open
+    // =========================
+    const origOpen = window.open;
+    window.open = function (url, ...args) {
+        if (block(url)) return null;
+        return origOpen.call(this, url, ...args);
+    };
+
+    // =========================
+    // 3. Block eval / Function
+    // =========================
+    const origEval = window.eval;
+    window.eval = function (code) {
+        if (typeof code === "string" && isBad(code)) {
+            console.warn("🚫 Blocked eval");
+            return;
+        }
+        return origEval(code);
+    };
+
+    const OrigFunction = window.Function;
+    window.Function = function (...args) {
+        const code = args.join(" ");
+        if (isBad(code)) {
+            console.warn("🚫 Blocked Function constructor");
+            return function () {};
+        }
+        return OrigFunction.apply(this, args);
+    };
+
+    // =========================
+    // 4. Block meta refresh
+    // =========================
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll('meta[http-equiv="refresh"]').forEach(m => {
+            m.remove();
+        });
+    });
+
+    // =========================
+    // 5. Stop iframe escape
+    // =========================
+    try {
+        Object.defineProperty(window, "top", {
+            get: () => window
+        });
+        Object.defineProperty(window, "parent", {
+            get: () => window
+        });
+    } catch (e) {}
+
+})();
+</script>
 </head>
 
 <body>
