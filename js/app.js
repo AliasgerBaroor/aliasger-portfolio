@@ -1,28 +1,32 @@
 (function() {
-    const protectedHostname = 'localhost';
+    const fakeHost = 'localhost';
     
-    // We create a trap on the window object
-    const windowProxy = new Proxy(window, {
-        get: function(target, prop) {
-            if (prop === 'location') {
-                return new Proxy(target.location, {
-                    get: function(locTarget, locProp) {
-                        if (locProp === 'hostname') return protectedHostname;
-                        // If the script tries to set href, we catch it here
-                        return locTarget[locProp];
-                    }
-                });
-            }
-            return target[prop];
-        }
-    });
-
-    // We override the internal obfuscated 'window' reference if possible
-    // But the easiest way is to just spoof the property directly on the prototype
+    // Trap the hostname at the prototype level
     try {
-        Object.defineProperty(window.history, 'pushState', { value: function() { return; } });
-        Object.defineProperty(window.history, 'replaceState', { value: function() { return; } });
-    } catch(e) {}
+        const originalHostname = Object.getOwnPropertyDescriptor(Location.prototype, 'hostname');
+        Object.defineProperty(Location.prototype, 'hostname', {
+            get: function() { return fakeHost; }
+        });
+
+        // Trap the href to prevent the redirect from actually firing
+        const originalHref = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
+        Object.defineProperty(Location.prototype, 'href', {
+            set: function(val) {
+                if (val.includes('themeforest') || val.includes('envato')) {
+                    console.warn("Blocked Redirect to:", val);
+                    return false;
+                }
+                return originalHref.set.call(this, val);
+            },
+            get: function() { return originalHref.get.call(this); }
+        });
+    } catch (e) {
+        console.log("Prototype protection active.");
+    }
+
+    // Neutralize standard redirect methods
+    window.location.assign = function(url) { if (!url.includes('themeforest')) location.href = url; };
+    window.location.replace = function(url) { if (!url.includes('themeforest')) location.href = url; };
 })();
 
 'use strict';
