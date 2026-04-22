@@ -19,17 +19,29 @@
     <link rel="stylesheet" type="text/css" href="css/colorswitcher.css">
     <link id="dynamic-theme" rel="stylesheet" href="css/skins/multicolors.css">
     <script>
-        // Forcefully disable the ability of any script to redirect the page
-        window.onbeforeunload = function () {
-            return "Redirect blocked.";
-        };
+        (function () {
+                const block = () => {
+                    console.log("Redirect attempt blocked.");
+                    return true;
+                };
 
-        // Override the location object's behavior if the script tries to use it
-        Object.defineProperty(window, 'location', {
-            value: window.location,
-            writable: false,
-            configurable: false
-        });
+                // Intercept attempts to change the page
+                window.onbeforeunload = block;
+
+                // 2. Neutralize common redirection methods used in templates
+                const originalAssign = window.location.assign;
+                const originalReplace = window.location.replace;
+
+                Object.defineProperty(window.location, 'href', {
+                    set: function (url) {
+                        if (url.includes('themeforest') || url.includes('envato')) {
+                            console.warn("Blocked template redirect to:", url);
+                            return false;
+                        }
+                        return url;
+                    }
+                });
+            })();
     </script>
 </head>
 
